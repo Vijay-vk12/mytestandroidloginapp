@@ -1,28 +1,25 @@
-# Use Maven image to build the project
+# ---------- Build Stage ----------
 FROM maven:3.9.5-eclipse-temurin-17 AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy Maven project files
+# Copy pom and source files
 COPY pom.xml .
 COPY src ./src
 
-# Build the project
+# Build jar file
 RUN mvn clean package -DskipTests
 
-# ============================
-
-# Use a lighter JDK image to run the app
+# ---------- Runtime Stage ----------
 FROM eclipse-temurin:17-jdk-alpine
 
 WORKDIR /app
 
-# Copy the built jar from the builder stage
+# Copy jar from builder stage
 COPY --from=builder /app/target/*.jar app.jar
 
-# Expose port
+# Expose port (Render uses dynamic PORT env variable)
 EXPOSE 8080
 
-# Run the app
+# Run the application with dynamic port
 ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
